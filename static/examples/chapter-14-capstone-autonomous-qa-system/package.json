@@ -1,0 +1,12 @@
+{
+  "name": "autonomous-qa-capstone",
+  "version": "1.0.0",
+  "scripts": {
+    "demo": "npx ts-node --skip-project autonomous-qa.ts 2>&1 || (echo '' && echo 'Note: This demo requires Node.js with @playwright/cli installed.' && echo 'In a real environment, this script orchestrates:' && echo '  1. Website discovery via playwright-cli snapshot' && echo '  2. Test plan generation via Planner Agent' && echo '  3. Test code generation via Generator Agent' && echo '  4. Test execution across all projects' && echo '  5. Auto-healing via Healer Agent' && echo '  6. Comprehensive report generation')"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0"
+  }
+}

@@ -1,0 +1,3 @@
+{"commands":[
+  {"input":"npx playwright test tests/security.spec.ts --reporter=list","output":"Running security tests...\n\n  ✓ Session cookie has HttpOnly flag ✅\n  ✓ Session cookie has Secure flag ✅\n  ✓ Logout invalidates session token ✅\n  ✓ Regular user cannot access /admin ✅\n  ✓ XSS payload <script> does not execute ✅\n  ✓ XSS payload <img onerror> does not execute ✅\n  ✓ Content-Security-Policy header present ✅\n  ✓ X-Content-Type-Options: nosniff ✅\n  ✓ HSTS header present ✅\n\n  9 passed (12.4s)","delay":2000}
+]}

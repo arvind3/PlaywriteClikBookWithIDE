@@ -1,0 +1,110 @@
+name: Agentic QA Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * *'  # Nightly at 2am UTC
+
+jobs:
+  install:
+    name: Install Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium firefox
+
+  generate-tests:
+    name: Generate Tests (Playwright Agents)
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - name: Run Planner Agent
+        run: |
+          npx playwright test \
+            --agent=planner \
+            --goal="Test all critical user flows" \
+            --output=test-plan.md
+      - name: Run Generator Agent
+        run: |
+          npx playwright test \
+            --agent=generator \
+            --plan=test-plan.md \
+            --output=tests/generated/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: generated-tests
+          path: tests/generated/
+
+  test:
+    name: Run Tests
+    needs: generate-tests
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        project: [chromium, firefox, mobile-chrome]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with: { name: generated-tests, path: tests/generated/ }
+      - name: Run Playwright Tests
+        run: npx playwright test --project=${{ matrix.project }}
+        env:
+          BASE_URL: ${{ secrets.STAGING_URL }}
+          CI: true
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report-${{ matrix.project }}
+          path: playwright-report/
+
+  heal:
+    name: Heal Failing Tests
+    needs: test
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - name: Run Healer Agent
+        run: |
+          npx playwright test \
+            --agent=healer \
+            --results=results/results.json \
+            --output=tests/healed/
+      - name: Commit healed tests
+        run: |
+          git config user.name "playwright-healer[bot]"
+          git config user.email "healer@noreply.github.com"
+          git add tests/healed/
+          git commit -m "chore: auto-heal failing tests [skip ci]"
+          git push
+
+  deploy:
+    name: Deploy to Staging
+    needs: test
+    if: github.ref == 'refs/heads/main' && success()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npm ci && npm run build
+      - uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist

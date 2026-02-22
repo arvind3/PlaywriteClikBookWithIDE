@@ -1,0 +1,9 @@
+{"commands":[
+  {"input":"playwright-cli goto https://shop.example.com/products","output":"Navigated to https://shop.example.com/products","delay":400},
+  {"input":"playwright-cli screenshot --path=step-01-products.png --full-page","output":"Screenshot saved to step-01-products.png","delay":400},
+  {"input":"playwright-cli click [ref=e3]","output":"Clicked element e3 (Add to Cart)","delay":300},
+  {"input":"playwright-cli screenshot --path=step-02-added-to-cart.png","output":"Screenshot saved to step-02-added-to-cart.png","delay":400},
+  {"input":"playwright-cli goto https://shop.example.com/cart","output":"Navigated to https://shop.example.com/cart","delay":400},
+  {"input":"playwright-cli screenshot --path=step-03-cart.png --full-page","output":"Screenshot saved to step-03-cart.png","delay":400},
+  {"input":"playwright-cli eval \"console.log('Tutorial: 3 steps captured, 3 screenshots saved')\"","output":"Tutorial: 3 steps captured, 3 screenshots saved","delay":300}
+]}

@@ -1,0 +1,170 @@
+.container {
+  border-radius: 10px;
+  overflow: hidden;
+  margin: 24px 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+}
+
+.loading {
+  padding: 20px;
+  text-align: center;
+  color: var(--ifm-color-emphasis-600);
+}
+
+.header {
+  background: #1e1e2e;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #313244;
+}
+
+.dots {
+  display: flex;
+  gap: 6px;
+}
+
+.dotRed { width: 12px; height: 12px; border-radius: 50%; background: #ff5f56; }
+.dotYellow { width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e; }
+.dotGreen { width: 12px; height: 12px; border-radius: 50%; background: #27c93f; }
+
+.title {
+  flex: 1;
+  text-align: center;
+  font-size: 0.8em;
+  color: #6c7086;
+}
+
+.controls {
+  display: flex;
+  gap: 8px;
+}
+
+.btn {
+  background: #313244;
+  color: #cdd6f4;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8em;
+  transition: background 0.2s;
+}
+
+.btn:hover:not(:disabled) {
+  background: #45475a;
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.terminal {
+  background: #1e1e2e;
+  padding: 16px;
+  min-height: 200px;
+  max-height: 450px;
+  overflow-y: auto;
+  color: #cdd6f4;
+  font-size: 0.9em;
+  line-height: 1.6;
+}
+
+.commandBlock {
+  margin-bottom: 12px;
+}
+
+.commandLine {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prompt {
+  color: #a6e3a1;
+  user-select: none;
+}
+
+.command {
+  color: #89dceb;
+}
+
+.cursor {
+  color: #cdd6f4;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.copyBtn {
+  background: none;
+  border: none;
+  color: #6c7086;
+  cursor: pointer;
+  font-size: 0.85em;
+  padding: 0 4px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.commandLine:hover .copyBtn {
+  opacity: 1;
+}
+
+.copyBtn:hover {
+  color: #cdd6f4;
+}
+
+.output {
+  color: #a6adc8;
+  margin: 4px 0 0 16px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.9em;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.outputError {
+  color: #f38ba8;
+}
+
+.hint {
+  color: #6c7086;
+  font-style: italic;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.done {
+  color: #a6e3a1;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.85em;
+}
+
+.screenshot {
+  background: #11111b;
+  padding: 16px;
+  border-top: 1px solid #313244;
+}
+
+.screenshot img {
+  width: 100%;
+  border-radius: 4px;
+  border: 1px solid #313244;
+}
+
+.screenshotCaption {
+  text-align: center;
+  color: #6c7086;
+  font-size: 0.85em;
+  margin-top: 8px;
+  margin-bottom: 0;
+}

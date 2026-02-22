@@ -1,0 +1,72 @@
+.callout {
+  border-left: 4px solid;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  margin: 16px 0;
+  background: var(--callout-bg);
+}
+
+.calloutHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.calloutIcon {
+  font-size: 1.1em;
+}
+
+.calloutLabel {
+  font-weight: 700;
+  font-size: 0.85em;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.calloutBody {
+  font-size: 0.95em;
+  line-height: 1.6;
+}
+
+.calloutBody p:last-child {
+  margin-bottom: 0;
+}
+
+/* QA — green */
+.callout-qa {
+  border-color: #16a34a;
+  background: rgba(22, 163, 74, 0.08);
+}
+.callout-qa .calloutLabel {
+  color: #16a34a;
+}
+
+/* Dev — blue */
+.callout-dev {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+}
+.callout-dev .calloutLabel {
+  color: #2563eb;
+}
+
+/* AI — purple */
+.callout-ai {
+  border-color: #7c3aed;
+  background: rgba(124, 58, 237, 0.08);
+}
+.callout-ai .calloutLabel {
+  color: #7c3aed;
+}
+
+/* Dark mode */
+[data-theme='dark'] .callout-qa {
+  background: rgba(22, 163, 74, 0.12);
+}
+[data-theme='dark'] .callout-dev {
+  background: rgba(37, 99, 235, 0.12);
+}
+[data-theme='dark'] .callout-ai {
+  background: rgba(124, 58, 237, 0.12);
+}

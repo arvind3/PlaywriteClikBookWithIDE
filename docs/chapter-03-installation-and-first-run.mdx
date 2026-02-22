@@ -1,0 +1,288 @@
+---
+sidebar_position: 3
+title: "Chapter 3: Installation, Setup, and Your First Session"
+description: "Install @playwright/cli, configure browsers, and run your first interactive browser session."
+---
+
+import Callout from '@site/src/components/Callout';
+import CodePlayground from '@site/src/components/CodePlayground';
+
+# Chapter 3: Installation, Setup, and Your First Playwright CLI Session
+
+## What You Will Learn
+
+You will install `@playwright/cli`, configure it for your environment, initialize a Playwright project, and run your first interactive browser session. By the end of this chapter, you will have a working local setup and have confirmed that Playwright CLI is correctly installed and functional.
+
+## Prerequisites
+
+- Node.js 18+ installed (`node --version` to check)
+- npm 9+ (`npm --version` to check)
+- Chapter 2: CLI vs MCP Architecture (for context)
+
+---
+
+## Installation
+
+Playwright CLI is published as an npm package. Install it globally or as a dev dependency in your project.
+
+### Option A: Global Install (Recommended for agent use)
+
+```bash
+npm install -g @playwright/cli
+```
+
+After install, verify:
+
+```bash
+playwright-cli --version
+```
+
+Expected output:
+```
+@playwright/cli 1.0.0
+```
+
+### Option B: Project-Scoped Install
+
+```bash
+npm install --save-dev @playwright/cli
+npx playwright-cli --version
+```
+
+<Callout type="ai">
+**For AI Engineers:** For agent tooling, global install is preferred. Your agent invokes `playwright-cli` directly from the shell. With a global install, no `npx` prefix is needed, keeping commands minimal and unambiguous.
+</Callout>
+
+---
+
+## Install Browsers
+
+Playwright CLI requires browser binaries. Install all three (Chromium, Firefox, WebKit):
+
+```bash
+npx playwright install
+```
+
+Or install only Chromium (smallest download, sufficient for most use cases):
+
+```bash
+npx playwright install chromium
+```
+
+You'll see download progress:
+
+```
+Downloading Chromium 132.0.6834.15 (playwright build v1155)...
+Downloading Firefox 133.0 (playwright build v1467)...
+Downloading WebKit/WebKitGTK 6.0.1 (playwright build v2104)...
+```
+
+<Callout type="qa">
+**For QA Engineers:** Cross-browser testing matters for QA. Install all three browsers for complete coverage. You can specify which browser Playwright CLI uses per session: `playwright-cli --browser=firefox goto https://example.com`.
+</Callout>
+
+---
+
+## Initialize a Playwright Project
+
+For test suite work (Chapters 10–14), you'll want a Playwright project scaffold:
+
+```bash
+mkdir my-playwright-project && cd my-playwright-project
+npm init playwright@latest
+```
+
+The interactive setup asks:
+- Language: TypeScript ✓
+- Test directory: `tests/`
+- GitHub Actions CI: yes (we configure this properly in Chapter 13)
+- Install browsers: yes if not done globally
+
+This creates:
+```
+my-playwright-project/
+  playwright.config.ts
+  tests/
+    example.spec.ts
+  package.json
+  tsconfig.json
+```
+
+---
+
+## Your First Interactive Session
+
+Start a headed (visible) browser session to explore the CLI interactively:
+
+```bash
+playwright-cli --headed goto https://playwright.dev
+```
+
+You'll see a browser window open and navigate to the Playwright website. Now take a snapshot of what the agent would see:
+
+```bash
+playwright-cli snapshot
+```
+
+You'll receive YAML output showing the page's interactive elements:
+
+```yaml
+- ref: e1
+  role: navigation
+  name: "Main navigation"
+  children:
+    - ref: e2
+      role: link
+      name: "Docs"
+    - ref: e3
+      role: link
+      name: "API"
+    - ref: e4
+      role: link
+      name: "Community"
+- ref: e5
+  role: main
+  children:
+    - ref: e6
+      role: heading
+      name: "Playwright enables reliable end-to-end testing"
+    - ref: e7
+      role: link
+      name: "Get started"
+    - ref: e8
+      role: link
+      name: "Star on GitHub"
+```
+
+Now click a link using its ref:
+
+```bash
+playwright-cli click [ref=e2]
+```
+
+Take a screenshot:
+
+```bash
+playwright-cli screenshot --path=docs-page.png
+```
+
+You've just run your first complete Playwright CLI session: navigate → inspect → interact → capture.
+
+---
+
+## Try It Live
+
+The interactive demo below runs a real Playwright project setup in your browser using WebContainers. You can see the project structure and modify the config:
+
+<CodePlayground chapter="chapter-03-installation-and-first-run" />
+
+---
+
+## Session Management
+
+Playwright CLI supports multiple concurrent sessions using the `-s` flag:
+
+```bash
+# Session 1: testing login flow
+playwright-cli -s=login goto https://app.example.com/login
+playwright-cli -s=login fill [ref=e5] "user@example.com"
+
+# Session 2 (simultaneously): testing product page
+playwright-cli -s=products goto https://app.example.com/products
+playwright-cli -s=products snapshot
+```
+
+Sessions are isolated — each maintains its own browser state, cookies, and localStorage. This enables agents to run parallel workflows.
+
+### Persistent Sessions
+
+Save browser profile to disk for re-use across agent runs:
+
+```bash
+playwright-cli --persistent --persistent-path=./session-data goto https://app.example.com
+```
+
+On the next run, the session resumes with existing cookies and authentication. This is powerful for agents that need to authenticate once and then run many tasks.
+
+<Callout type="dev">
+**For Developers:** Persistent sessions are invaluable for development workflows. Log in to your staging environment once, save the session, and all subsequent agent runs use that authenticated session without re-logging-in.
+</Callout>
+
+---
+
+## The Visual Dashboard
+
+For debugging and development, open the Playwright CLI visual dashboard:
+
+```bash
+playwright-cli show
+```
+
+This opens a browser-based UI showing:
+- All active sessions
+- Browser state per session
+- Command history
+- Screenshot gallery
+
+---
+
+## Try It Yourself
+
+### Challenge 1: Navigate and Inspect
+Install Playwright CLI globally. Navigate to `https://github.com` using `playwright-cli goto`. Run `snapshot` and identify the search bar element reference. Use `click` on it.
+
+### Challenge 2: Multi-Session
+Start two sessions simultaneously: one pointing to `https://playwright.dev`, another to `https://nodejs.org`. Take snapshots of both and compare the YAML output.
+
+### Challenge 3: Persistent Session
+Create a persistent session pointed at any website. Close the terminal, reopen it, and re-run `playwright-cli --persistent --persistent-path=./session goto https://same-url`. Verify the session resumed by checking that cookies are preserved.
+
+---
+
+## Common Mistakes
+
+**Mistake 1: Using `playwright` instead of `playwright-cli`**
+
+```bash
+# Wrong — this is the Playwright test runner
+playwright test
+
+# Correct — this is the Playwright CLI agentic tool
+playwright-cli goto https://example.com
+```
+
+The `playwright` binary is the test runner. `playwright-cli` is the agentic CLI tool. They are separate packages.
+
+**Mistake 2: Forgetting to install browser binaries**
+
+```
+Error: Browser not found. Run `npx playwright install` first.
+```
+
+Run `npx playwright install chromium` if you only need one browser.
+
+**Mistake 3: Running `snapshot` without an active page**
+
+```bash
+playwright-cli snapshot
+# Error: No active page. Use `goto` to navigate first.
+```
+
+Always navigate before snapshotting.
+
+---
+
+## Summary
+
+- Install `@playwright/cli` globally: `npm install -g @playwright/cli`
+- Install browsers: `npx playwright install`
+- Core workflow: `goto` → `snapshot` → `click` / `fill` → `screenshot`
+- Use `-s=session-name` for multiple concurrent sessions
+- Use `--persistent` to save session state across agent runs
+- `playwright-cli show` opens the visual debugging dashboard
+
+## Next Steps
+
+With Playwright CLI installed, Chapter 4 dives into every core command — navigation, interaction, form control, keyboard input, and dialog handling.
+
+**[→ Chapter 4: Core CLI Commands: Navigation, Interaction, and Page Control](./chapter-04-core-cli-commands)**

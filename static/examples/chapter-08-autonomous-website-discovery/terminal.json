@@ -1,0 +1,8 @@
+{"commands":[
+  {"input":"playwright-cli goto https://shop.example.com","output":"Navigated to https://shop.example.com","delay":400},
+  {"input":"playwright-cli snapshot","output":"- ref: e1\n  role: navigation\n  children:\n    - ref: e2\n      role: link\n      name: Products\n    - ref: e3\n      role: link\n      name: Cart\n    - ref: e4\n      role: link\n      name: Account\n- ref: e5\n  role: main\n  children:\n    - ref: e6\n      role: heading\n      name: Welcome to Our Store\n    - ref: e7\n      role: button\n      name: Shop Now","delay":600},
+  {"input":"playwright-cli click [ref=e2]","output":"Clicked element e2","delay":300},
+  {"input":"playwright-cli snapshot","output":"- ref: e1\n  role: main\n  children:\n    - ref: e2\n      role: heading\n      name: Our Products\n    - ref: e3\n      role: button\n      name: Add to Cart\n    - ref: e4\n      role: button\n      name: Add to Cart\n    - ref: e5\n      role: button\n      name: Add to Cart","delay":500},
+  {"input":"playwright-cli eval \"document.title\"","output":"Products — Shop.example.com","delay":200},
+  {"input":"playwright-cli screenshot --path=discovery-products.png","output":"Screenshot saved to discovery-products.png","delay":300}
+]}

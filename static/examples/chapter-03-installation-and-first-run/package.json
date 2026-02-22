@@ -1,0 +1,12 @@
+{
+  "name": "playwright-cli-chapter-03",
+  "version": "1.0.0",
+  "scripts": {
+    "demo": "node -e \"console.log('@playwright/cli 1.0.0\\nPlaywright CLI installed successfully!\\n\\nAvailable commands:\\n  playwright-cli goto <url>\\n  playwright-cli snapshot\\n  playwright-cli click [ref=eN]\\n  playwright-cli fill [ref=eN] <value>\\n  playwright-cli screenshot --path=<file>\\n\\nRun playwright-cli --help for full reference.')\"",
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/cli": "^1.0.0",
+    "@playwright/test": "^1.50.0"
+  }
+}

@@ -1,0 +1,4 @@
+{"commands":[
+  {"input":"npx playwright test tests/performance.spec.ts --reporter=list","output":"Running performance tests...\n\n  ✓ LCP under 2.5s — 1847ms ✅\n  ✓ CLS under 0.1 — 0.032 ✅\n  ✓ TTFB under 200ms — 143ms ✅\n  ✓ Homepage no horizontal scroll (375px) ✅\n  ✓ No critical accessibility violations ✅\n  ✓ Homepage visual snapshot matches baseline ✅\n\n  6 passed (8.3s)","delay":2000},
+  {"input":"npx playwright test --update-snapshots tests/visual.spec.ts","output":"Updating visual baselines...\n\n  Updated __screenshots__/homepage.png\n  Updated __screenshots__/products.png\n  Updated __screenshots__/checkout.png\n\n  3 snapshots updated","delay":1200}
+]}

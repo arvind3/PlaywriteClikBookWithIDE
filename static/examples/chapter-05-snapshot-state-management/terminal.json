@@ -1,0 +1,11 @@
+{
+  "commands": [
+    { "input": "playwright-cli goto https://the-internet.herokuapp.com/login", "output": "Navigated to https://the-internet.herokuapp.com/login", "delay": 400 },
+    { "input": "playwright-cli snapshot", "output": "- ref: e1\n  role: main\n  children:\n    - ref: e2\n      role: heading\n      name: Login Page\n    - ref: e3\n      role: textbox\n      name: Username\n      value: \"\"\n    - ref: e4\n      role: textbox\n      name: Password\n      value: \"\"\n    - ref: e5\n      role: button\n      name: Login\n    - ref: e6\n      role: link\n      name: Forgot Password", "delay": 500 },
+    { "input": "playwright-cli fill [ref=e3] \"tomsmith\"", "output": "Filled element e3", "delay": 250 },
+    { "input": "playwright-cli fill [ref=e4] \"SuperSecretPassword!\"", "output": "Filled element e4", "delay": 250 },
+    { "input": "playwright-cli click [ref=e5]", "output": "Clicked element e5", "delay": 400 },
+    { "input": "playwright-cli snapshot", "output": "- ref: e1\n  role: main\n  children:\n    - ref: e2\n      role: heading\n      name: Secure Area\n    - ref: e3\n      role: alert\n      name: You logged into a secure area!\n    - ref: e4\n      role: link\n      name: Logout", "delay": 500 },
+    { "input": "playwright-cli screenshot --path=logged-in.png", "output": "Screenshot saved to logged-in.png", "delay": 300 }
+  ]
+}

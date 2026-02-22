@@ -1,0 +1,22 @@
+{
+  "steps": [
+    {
+      "agent": "planner",
+      "label": "Analyzing goal and generating test plan...",
+      "output": "# Test Plan: Shopping Cart Flow\n\n## Scenarios\n\n### 1. Add Item to Cart (Happy Path)\n- Navigate to /products\n- Click \"Add to Cart\" on first product\n- Assert: cart badge shows count 1\n- Assert: success notification appears\n\n### 2. Update Item Quantity\n- Navigate to /cart with 1 item\n- Change quantity to 3\n- Click \"Update Cart\"\n- Assert: subtotal = price × 3\n\n### 3. Remove Item from Cart\n- Navigate to /cart with 1 item\n- Click \"Remove\" on the item\n- Assert: cart is empty message shown\n- Assert: cart badge shows 0\n\n### 4. Apply Valid Coupon\n- Navigate to /cart\n- Fill coupon code: \"SAVE10\"\n- Click \"Apply\"\n- Assert: 10% discount shown on total\n\n### 5. Apply Invalid Coupon\n- Fill invalid coupon code: \"FAKECODE\"\n- Assert: \"Invalid coupon code\" error\n- Assert: total unchanged",
+      "delay": 1800
+    },
+    {
+      "agent": "generator",
+      "label": "Generating TypeScript tests (verifying selectors against live app)...",
+      "output": "import { test, expect } from '@playwright/test';\n\ntest.describe('Shopping Cart', () => {\n  test('Add item to cart', async ({ page }) => {\n    await page.goto('/products');\n    const addBtn = page.getByRole('button', { name: /add to cart/i }).first();\n    await addBtn.click();\n    await expect(page.getByTestId('cart-count')).toHaveText('1');\n    await expect(page.getByText(/added to cart/i)).toBeVisible();\n  });\n\n  test('Update item quantity', async ({ page }) => {\n    await page.goto('/cart');\n    await page.getByLabel('Quantity').fill('3');\n    await page.getByRole('button', { name: 'Update Cart' }).click();\n    const price = await page.getByTestId('unit-price').textContent();\n    const total = await page.getByTestId('subtotal').textContent();\n    // Verify total = price × 3\n    expect(Number(total?.replace('$',''))).toBe(\n      Number(price?.replace('$','')) * 3\n    );\n  });\n});\n\n// Generated 5 tests | Verified selectors ✓",
+      "delay": 2200
+    },
+    {
+      "agent": "healer",
+      "label": "Running tests and healing failures...",
+      "output": "Running 5 tests...\n\n✅ Add item to cart — PASSED (1.2s)\n❌ Update item quantity — FAILED\n\n  Error: Expected 'cart-count' to have text '1'\n  Actual: data-testid not found — element uses aria-label instead\n\n  Analyzing page structure...\n  Fix: page.getByTestId('cart-count') →\n       page.getByRole('status', { name: /cart/i })\n\n  Applying fix... ✅ PASSED\n\n✅ Remove item from cart — PASSED (0.9s)\n✅ Apply valid coupon — PASSED (1.4s)\n✅ Apply invalid coupon — PASSED (0.8s)\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\nTests healed: 1\nTests passing: 5/5 ✅\nUpdated: tests/cart.spec.ts",
+      "delay": 2500
+    }
+  ]
+}

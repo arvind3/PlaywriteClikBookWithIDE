@@ -1,0 +1,11 @@
+{
+  "commands": [
+    { "input": "playwright-cli goto https://playwright.dev", "output": "Navigated to https://playwright.dev", "delay": 400 },
+    { "input": "playwright-cli snapshot", "output": "- ref: e1\n  role: navigation\n  name: Main navigation\n  children:\n    - ref: e2\n      role: link\n      name: Docs\n    - ref: e3\n      role: link\n      name: API\n    - ref: e4\n      role: link\n      name: Community\n- ref: e5\n  role: main\n  children:\n    - ref: e6\n      role: heading\n      name: Playwright enables reliable end-to-end testing\n    - ref: e7\n      role: link\n      name: Get started\n    - ref: e8\n      role: searchbox\n      name: Search docs", "delay": 600 },
+    { "input": "playwright-cli click [ref=e2]", "output": "Clicked element e2", "delay": 350 },
+    { "input": "playwright-cli screenshot --path=docs-page.png", "output": "Screenshot saved to docs-page.png", "delay": 300 },
+    { "input": "playwright-cli fill [ref=e8] \"test agents\"", "output": "Filled element e8 with: test agents", "delay": 350 },
+    { "input": "playwright-cli press Enter", "output": "Pressed Enter", "delay": 300 },
+    { "input": "playwright-cli snapshot", "output": "- ref: e1\n  role: main\n  children:\n    - ref: e2\n      role: heading\n      name: Search results for \"test agents\"\n    - ref: e3\n      role: link\n      name: Test Agents | Playwright\n    - ref: e4\n      role: link\n      name: Agents API Reference", "delay": 500 }
+  ]
+}

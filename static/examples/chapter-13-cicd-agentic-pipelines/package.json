@@ -1,0 +1,13 @@
+{
+  "name": "playwright-cli-ci-demo",
+  "version": "1.0.0",
+  "scripts": {
+    "demo": "echo 'Playwright CLI CI/CD configuration loaded' && echo '' && echo 'Config summary:' && echo '  testDir: ./tests' && echo '  retries (CI): 2' && echo '  workers (CI): 4' && echo '  reporters: html, junit, json' && echo '  projects: chromium, firefox, mobile-chrome' && echo '' && echo 'To run in CI: BASE_URL=https://staging.example.com npx playwright test'",
+    "test": "npx playwright test",
+    "test:ci": "CI=true BASE_URL=https://staging.example.com npx playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.50.0",
+    "typescript": "^5.0.0"
+  }
+}

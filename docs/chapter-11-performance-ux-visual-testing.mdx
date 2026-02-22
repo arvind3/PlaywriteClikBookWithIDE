@@ -1,0 +1,354 @@
+---
+sidebar_position: 11
+title: "Chapter 11: Performance, UX, and Visual Testing"
+description: "Automate performance metrics, visual regression, accessibility, and UX quality testing via Playwright CLI."
+---
+
+import Callout from '@site/src/components/Callout';
+import TerminalPlayground from '@site/src/components/TerminalPlayground';
+
+# Chapter 11: Performance, UX, and Visual Testing via Playwright CLI
+
+## What You Will Learn
+
+You will learn to automate three non-functional testing dimensions: performance metrics (Core Web Vitals), UX quality (accessibility, responsive design), and visual regression (screenshot comparison). By the end, you'll have a complete non-functional test suite that runs autonomously in CI.
+
+## Prerequisites
+
+- Chapter 10: Autonomous Functional Test Suite Generation
+
+---
+
+## Performance Testing with Playwright CLI
+
+### Core Web Vitals via `eval`
+
+Playwright can capture Core Web Vitals directly from the browser's Performance API:
+
+```typescript
+import { test, expect } from '@playwright/test';
+
+test.describe('Performance: Core Web Vitals', () => {
+  test('LCP under 2.5 seconds', async ({ page }) => {
+    await page.goto('https://app.example.com');
+
+    const lcp = await page.evaluate(() => {
+      return new Promise<number>((resolve) => {
+        new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          const lastEntry = entries[entries.length - 1];
+          resolve(lastEntry.startTime);
+        }).observe({ type: 'largest-contentful-paint', buffered: true });
+
+        // Fallback if LCP already fired
+        setTimeout(() => resolve(
+          performance.getEntriesByType('largest-contentful-paint')
+            .slice(-1)[0]?.startTime ?? 9999
+        ), 2000);
+      });
+    });
+
+    console.log(`LCP: ${lcp.toFixed(0)}ms`);
+    expect(lcp).toBeLessThan(2500); // Google's "Good" threshold
+  });
+
+  test('FID / INP under 200ms', async ({ page }) => {
+    await page.goto('https://app.example.com');
+
+    const inp = await page.evaluate(() => {
+      return new Promise<number>((resolve) => {
+        new PerformanceObserver((list) => {
+          const entries = list.getEntries() as PerformanceEventTiming[];
+          const maxDuration = Math.max(...entries.map(e => e.duration));
+          resolve(maxDuration);
+        }).observe({ type: 'event', buffered: true, durationThreshold: 40 });
+        setTimeout(() => resolve(0), 3000);
+      });
+    });
+
+    console.log(`Max INP: ${inp.toFixed(0)}ms`);
+    expect(inp).toBeLessThan(200);
+  });
+
+  test('CLS under 0.1', async ({ page }) => {
+    await page.goto('https://app.example.com');
+
+    const cls = await page.evaluate(() => {
+      return new Promise<number>((resolve) => {
+        let clsValue = 0;
+        new PerformanceObserver((list) => {
+          for (const entry of list.getEntries() as any[]) {
+            if (!entry.hadRecentInput) clsValue += entry.value;
+          }
+          resolve(clsValue);
+        }).observe({ type: 'layout-shift', buffered: true });
+        setTimeout(() => resolve(clsValue), 5000);
+      });
+    });
+
+    console.log(`CLS: ${cls.toFixed(4)}`);
+    expect(cls).toBeLessThan(0.1);
+  });
+});
+```
+
+### Performance Baseline Tracking
+
+```typescript
+import * as fs from 'fs';
+
+interface PerfBaseline {
+  url: string;
+  timestamp: string;
+  lcp: number;
+  cls: number;
+  ttfb: number;
+}
+
+function saveBaseline(metrics: PerfBaseline): void {
+  const file = 'perf-baseline.json';
+  const baselines: PerfBaseline[] = fs.existsSync(file)
+    ? JSON.parse(fs.readFileSync(file, 'utf-8'))
+    : [];
+  baselines.push(metrics);
+  fs.writeFileSync(file, JSON.stringify(baselines, null, 2));
+}
+
+function compareToBaseline(current: PerfBaseline): void {
+  const file = 'perf-baseline.json';
+  if (!fs.existsSync(file)) return;
+
+  const baselines: PerfBaseline[] = JSON.parse(fs.readFileSync(file, 'utf-8'));
+  const last = baselines.slice(-2, -1)[0]; // Previous run
+  if (!last) return;
+
+  const lcpDelta = ((current.lcp - last.lcp) / last.lcp * 100).toFixed(1);
+  console.log(`LCP change: ${lcpDelta}% (${last.lcp.toFixed(0)}ms → ${current.lcp.toFixed(0)}ms)`);
+
+  if (current.lcp > last.lcp * 1.2) {
+    throw new Error(`Performance regression: LCP increased by more than 20%`);
+  }
+}
+```
+
+---
+
+## UX and Accessibility Testing
+
+### Automated Accessibility Audit
+
+```typescript
+import AxeBuilder from '@axe-core/playwright';
+
+test.describe('Accessibility', () => {
+  test('Homepage has no WCAG 2.1 AA violations', async ({ page }) => {
+    await page.goto('https://app.example.com');
+
+    const results = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'])
+      .analyze();
+
+    if (results.violations.length > 0) {
+      console.log('Accessibility violations:');
+      for (const v of results.violations) {
+        console.log(`  [${v.impact}] ${v.id}: ${v.description}`);
+        console.log(`  Elements: ${v.nodes.map(n => n.target).join(', ')}`);
+      }
+    }
+
+    expect(results.violations).toHaveLength(0);
+  });
+
+  test('Login form is keyboard accessible', async ({ page }) => {
+    await page.goto('https://app.example.com/login');
+
+    // Tab through the form
+    await page.keyboard.press('Tab');
+    await expect(page.getByLabel('Email')).toBeFocused();
+
+    await page.keyboard.press('Tab');
+    await expect(page.getByLabel('Password')).toBeFocused();
+
+    await page.keyboard.press('Tab');
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeFocused();
+
+    // Submit via Enter key
+    await page.keyboard.press('Enter');
+    await expect(page.getByText(/invalid|required/i)).toBeVisible();
+  });
+});
+```
+
+<Callout type="qa">
+**For QA Engineers:** Automated accessibility testing doesn't replace manual audits, but it catches the 40–60% of violations that are mechanically detectable. Run `axe-core` on every page in your suite as a baseline. For WCAG compliance projects, this gets you most of the way there automatically.
+</Callout>
+
+### Responsive Design Testing
+
+```typescript
+const viewports = [
+  { name: 'Mobile', width: 375, height: 812 },
+  { name: 'Tablet', width: 768, height: 1024 },
+  { name: 'Desktop', width: 1440, height: 900 },
+];
+
+for (const viewport of viewports) {
+  test(`Homepage renders correctly at ${viewport.name} (${viewport.width}px)`, async ({ page }) => {
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    await page.goto('https://app.example.com');
+
+    // No horizontal scroll
+    const scrollWidth = await page.evaluate(() => document.documentElement.scrollWidth);
+    expect(scrollWidth).toBeLessThanOrEqual(viewport.width);
+
+    // Navigation is accessible
+    const nav = page.getByRole('navigation');
+    await expect(nav).toBeVisible();
+
+    // Screenshot for visual review
+    await page.screenshot({ path: `screenshots/responsive-${viewport.name}.png`, fullPage: true });
+  });
+}
+```
+
+---
+
+## Visual Regression Testing
+
+### Baseline Screenshot Comparison
+
+```typescript
+test('Homepage visual regression', async ({ page }) => {
+  await page.goto('https://app.example.com');
+  await page.waitForLoadState('networkidle');
+
+  // Compare against stored baseline screenshot
+  await expect(page).toHaveScreenshot('homepage.png', {
+    threshold: 0.02,  // 2% pixel difference tolerance
+    maxDiffPixels: 100,
+  });
+});
+```
+
+Playwright's built-in `toHaveScreenshot` manages baseline images automatically:
+- First run: creates baseline screenshots in `__screenshots__/`
+- Subsequent runs: compares against baseline and fails on significant differences
+- Update baselines: `npx playwright test --update-snapshots`
+
+<TerminalPlayground chapter="chapter-11-performance-ux-visual-testing" />
+
+### Component-Level Visual Testing
+
+```typescript
+test('Product card visual regression', async ({ page }) => {
+  await page.goto('https://app.example.com/products');
+
+  // Test a specific component, not the whole page
+  const productCard = page.locator('.product-card').first();
+  await expect(productCard).toHaveScreenshot('product-card.png');
+});
+```
+
+<Callout type="dev">
+**For Developers:** Component-level screenshots are more stable than full-page screenshots because they're not affected by changes elsewhere on the page. Scope your visual tests to components you care about, not entire pages.
+</Callout>
+
+---
+
+## Combined Non-Functional Test Suite
+
+```typescript
+// tests/non-functional.spec.ts
+import { test, expect } from '@playwright/test';
+import AxeBuilder from '@axe-core/playwright';
+
+const pages = [
+  { name: 'Homepage', path: '/' },
+  { name: 'Products', path: '/products' },
+  { name: 'Login', path: '/login' },
+  { name: 'Checkout', path: '/checkout' },
+];
+
+for (const { name, path } of pages) {
+  test.describe(`${name} (${path})`, () => {
+    test('No critical accessibility violations', async ({ page }) => {
+      await page.goto(`https://app.example.com${path}`);
+      const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
+      const critical = results.violations.filter(v => v.impact === 'critical');
+      expect(critical).toHaveLength(0);
+    });
+
+    test('LCP under 2.5s', async ({ page }) => {
+      await page.goto(`https://app.example.com${path}`);
+      const lcp = await page.evaluate(() =>
+        performance.getEntriesByType('largest-contentful-paint').slice(-1)[0]?.startTime ?? 0
+      );
+      expect(lcp).toBeLessThan(2500);
+    });
+
+    test('No horizontal scroll on mobile', async ({ page }) => {
+      await page.setViewportSize({ width: 375, height: 812 });
+      await page.goto(`https://app.example.com${path}`);
+      const sw = await page.evaluate(() => document.documentElement.scrollWidth);
+      expect(sw).toBeLessThanOrEqual(375);
+    });
+
+    test('Visual snapshot', async ({ page }) => {
+      await page.goto(`https://app.example.com${path}`);
+      await page.waitForLoadState('networkidle');
+      await expect(page).toHaveScreenshot(`${name.toLowerCase().replace(/ /g, '-')}.png`);
+    });
+  });
+}
+```
+
+---
+
+## Try It Yourself
+
+### Challenge 1: Performance Baseline
+Navigate to any public website using Playwright CLI. Use `eval "performance.getEntriesByType('navigation')[0].responseEnd"` to get TTFB. Is it under 200ms?
+
+### Challenge 2: Accessibility Spot Check
+Install `@axe-core/playwright` in a Playwright project. Run an accessibility audit on a public website. How many violations does it find? What's the most critical?
+
+### Challenge 3: Responsive Screenshot Gallery
+Write a test that takes screenshots of your site at 375px, 768px, and 1440px viewports and saves them as `mobile.png`, `tablet.png`, `desktop.png`. Open them side by side and look for layout issues.
+
+---
+
+## Common Mistakes
+
+**Mistake 1: Visual tests on pages with dynamic content**
+Dynamic content (timestamps, personalized data, animations) causes false positives in visual tests. Mask or stabilize dynamic regions:
+```typescript
+await expect(page).toHaveScreenshot('page.png', {
+  mask: [page.locator('.timestamp'), page.locator('.user-avatar')],
+});
+```
+
+**Mistake 2: Measuring LCP before the page fully loads**
+Always wait for `networkidle` or `load` before measuring performance metrics:
+```typescript
+await page.goto(url, { waitUntil: 'networkidle' });
+const lcp = await page.evaluate(...);
+```
+
+**Mistake 3: Running visual regression tests in CI without consistent rendering**
+Different OS/GPU rendering can cause pixel differences. Use `--update-snapshots` in CI to regenerate baselines, and commit the baseline images to the repository.
+
+---
+
+## Summary
+
+- Core Web Vitals (LCP, CLS, INP) measurable via `page.evaluate()` with PerformanceObserver
+- Accessibility testing via `@axe-core/playwright` — catches 40–60% of WCAG violations automatically
+- Responsive design: test key viewports (375px, 768px, 1440px) for horizontal scroll and layout
+- Visual regression: `toHaveScreenshot()` compares against stored baselines
+- Combine all four into a single non-functional test suite that runs on every page
+
+## Next Steps
+
+Chapter 12 covers security testing automation — using Playwright CLI to detect common vulnerabilities in web applications.
+
+**[→ Chapter 12: Security Testing Automation with Playwright CLI](./chapter-12-security-testing-automation)**
