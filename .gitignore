@@ -25,4 +25,4 @@ yarn-error.log*
 # Playwright test results
 test-results/
 playwright-report/
-
+artifacts/

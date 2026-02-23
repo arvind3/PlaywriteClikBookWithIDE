@@ -2,6 +2,14 @@ import {themes as prismThemes} from 'prism-react-renderer';
 import type {Config} from '@docusaurus/types';
 import type * as Preset from '@docusaurus/preset-classic';
 
+const analyticsConfig = require('./analytics/analytics.config.json') as {
+  book_id: string;
+  ga4: {measurement_id: string};
+  gtm: {container_id: string};
+  consent: {mode: 'always_on' | 'balanced_by_region' | 'strict_by_default'};
+  region_policy: {restricted_regions: string[]};
+};
+
 const config: Config = {
   title: 'Playwright CLI: The Agentic Testing Handbook',
   tagline: 'Master token-efficient browser automation for AI agents, QA engineers, and developers',
@@ -31,6 +39,16 @@ const config: Config = {
   },
 
   plugins: [
+    [
+      require.resolve('./plugins/ga4-skill-plugin'),
+      {
+        measurementId: analyticsConfig.ga4.measurement_id,
+        gtmContainerId: analyticsConfig.gtm.container_id,
+        bookId: analyticsConfig.book_id,
+        consentMode: analyticsConfig.consent.mode,
+        restrictedRegions: analyticsConfig.region_policy.restricted_regions,
+      },
+    ],
     [
       require.resolve('@easyops-cn/docusaurus-search-local'),
       {
@@ -123,7 +141,7 @@ const config: Config = {
           ],
         },
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Playwright CLI Book. Built with Docusaurus.`,
+      copyright: `Copyright © ${new Date().getFullYear()} Playwright CLI Book. Built with Docusaurus. This site uses privacy-aware analytics to improve book content quality.`,
     },
     prism: {
       theme: prismThemes.github,
