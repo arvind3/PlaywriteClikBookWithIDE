@@ -89,6 +89,24 @@ async function runAudit(args: Args): Promise<AuditReport> {
   const context = await browser.newContext();
   const page = await context.newPage();
 
+  const hasObservedEvent = async (eventName: string): Promise<boolean> => {
+    return page.evaluate((targetEvent) => {
+      const audit = (window as any).__ga4Audit || {events: []};
+      return Array.isArray(audit.events) && audit.events.includes(targetEvent);
+    }, eventName);
+  };
+
+  const waitForObservedEvent = async (eventName: string, timeoutMs: number): Promise<boolean> => {
+    const startedAt = Date.now();
+    while (Date.now() - startedAt < timeoutMs) {
+      if (await hasObservedEvent(eventName)) {
+        return true;
+      }
+      await page.waitForTimeout(250);
+    }
+    return hasObservedEvent(eventName);
+  };
+
   await page.addInitScript(() => {
     (window as any).__ga4Audit = {
       pushes: [] as unknown[],
@@ -117,30 +135,52 @@ async function runAudit(args: Args): Promise<AuditReport> {
 
   try {
     await page.goto(args.url, {waitUntil: 'domcontentloaded', timeout: args.timeoutMs});
-    await page.waitForTimeout(1200);
+    await page.waitForTimeout(1800);
 
-    await page.evaluate(() => {
-      window.scrollTo(0, document.body.scrollHeight * 0.95);
-    });
-    await page.waitForTimeout(900);
+    const chapterViewSeen = await waitForObservedEvent('chapter_view', 6000);
 
-    const codeCopyClicked = await page.evaluate(() => {
-      const copyButton = document.querySelector('button[class*="copyButton"], button[aria-label*="copy" i]') as HTMLButtonElement | null;
-      if (!copyButton) {
-        return false;
+    let chapterCompleteSeen = false;
+    for (let i = 0; i < 14 && !chapterCompleteSeen; i += 1) {
+      await page.evaluate(() => {
+        const maxHeight = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+        const nextY = Math.min(window.scrollY + window.innerHeight * 0.85, maxHeight);
+        window.scrollTo(0, nextY);
+        window.dispatchEvent(new Event('scroll'));
+      });
+      chapterCompleteSeen = await waitForObservedEvent('chapter_complete', 650);
+    }
+    if (!chapterCompleteSeen) {
+      await page.keyboard.press('End');
+      chapterCompleteSeen = await waitForObservedEvent('chapter_complete', 1800);
+    }
+
+    let codeCopyClicked = false;
+    try {
+      const copyButton = page.locator('button[class*="copyButton"], button[aria-label*="copy" i]').first();
+      if (await copyButton.count()) {
+        await copyButton.click({timeout: 2500});
+        codeCopyClicked = true;
       }
-      copyButton.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
-      return true;
-    });
+    } catch {
+      codeCopyClicked = false;
+    }
+    if (codeCopyClicked) {
+      await waitForObservedEvent('code_copy', 2500);
+    }
 
-    const tocClicked = await page.evaluate(() => {
-      const tocLink = document.querySelector('nav.table-of-contents a, a.table-of-contents__link') as HTMLAnchorElement | null;
-      if (!tocLink) {
-        return false;
+    let tocClicked = false;
+    try {
+      const tocLink = page.locator('nav.table-of-contents a, a.table-of-contents__link').first();
+      if (await tocLink.count()) {
+        await tocLink.click({timeout: 2500});
+        tocClicked = true;
       }
-      tocLink.dispatchEvent(new MouseEvent('click', {bubbles: true, cancelable: true}));
-      return true;
-    });
+    } catch {
+      tocClicked = false;
+    }
+    if (tocClicked) {
+      await waitForObservedEvent('toc_interaction', 2500);
+    }
 
     await page.waitForTimeout(1000);
 
@@ -169,7 +209,13 @@ async function runAudit(args: Args): Promise<AuditReport> {
 
     const observedEvents = Array.from(observed).sort();
 
-    const required = ['chapter_view', 'chapter_complete'];
+    const required: string[] = [];
+    if (!chapterViewSeen) {
+      required.push('chapter_view');
+    }
+    if (!chapterCompleteSeen) {
+      required.push('chapter_complete');
+    }
     const missingRequired = required.filter((evt) => !observed.has(evt));
 
     if (codeCopyClicked && !observed.has('code_copy')) {
