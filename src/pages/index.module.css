@@ -209,6 +209,10 @@
   flex-shrink: 0;
 }
 
+[data-theme='dark'] .chapterNum {
+  color: #063329;
+}
+
 .chapterTitle {
   font-size: 0.9rem;
   font-weight: 500;
