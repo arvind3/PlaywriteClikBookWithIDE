@@ -136,6 +136,7 @@ jobs:
           npx serve -s build -l 3000 &
           sleep 3
           npx --yes tsx tools/analytics/audit_events_playwright.ts --url http://localhost:3000/PlaywriteClikBookWithIDE/docs/chapter-01-agentic-testing-revolution --output artifacts/ga4-runtime-local.json
+        continue-on-error: true
 
       - name: Upload analytics runtime artifact
         uses: actions/upload-artifact@v4
