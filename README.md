@@ -39,3 +39,15 @@ GIT_USER=<Your GitHub username> yarn deploy
 ```
 
 If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+
+## Analytics (GA4 + GTM)
+
+- Config source: `analytics/analytics.config.json`
+- Contract docs: `analytics/README.md`
+- KPI spec: `analytics/dashboard-kpis.md`
+
+Commands:
+
+- `npm run analytics:validate`: validate analytics config contract and, if `build/` exists, scan generated HTML for duplicate tag injection.
+- `npm run analytics:snippets`: generate GTM/gtag snippets into `artifacts/snippets`.
+- `LIVE_BASE_URL=https://arvind3.github.io/PlaywriteClikBookWithIDE npm run analytics:audit:live`: run runtime analytics audit against the live site.

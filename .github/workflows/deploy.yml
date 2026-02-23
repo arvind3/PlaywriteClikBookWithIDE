@@ -52,6 +52,11 @@ jobs:
           node-version: '20'
           cache: npm
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
       - name: Restore node_modules
         uses: actions/cache@v4
         with:
@@ -61,13 +66,26 @@ jobs:
       - name: Install dependencies (if cache miss)
         run: npm ci
 
+      - name: Validate analytics contract (config)
+        run: python3 tools/analytics/validate_config.py --config analytics/analytics.config.json --output artifacts/ga4-contract-report.json
+
       - name: Build site
         run: npm run build
+
+      - name: Validate analytics contract (built site)
+        run: python3 tools/analytics/validate_config.py --config analytics/analytics.config.json --site-dir build --output artifacts/ga4-contract-report-build.json
 
       - name: Upload build artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: build/
+
+      - name: Upload analytics contract artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: analytics-contract-reports
+          path: artifacts/ga4-contract-report*.json
 
   test:
     name: Run Playwright Tests
@@ -112,6 +130,19 @@ jobs:
           sleep 3
           BASE_URL=http://localhost:3000/PlaywriteClikBookWithIDE npx playwright test tests/ --reporter=list
         continue-on-error: true
+
+      - name: Local analytics runtime audit
+        run: |
+          npx serve -s build -l 3000 &
+          sleep 3
+          npx --yes tsx tools/analytics/audit_events_playwright.ts --url http://localhost:3000/PlaywriteClikBookWithIDE/docs/chapter-01-agentic-testing-revolution --output artifacts/ga4-runtime-local.json
+
+      - name: Upload analytics runtime artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: analytics-runtime-local
+          path: artifacts/ga4-runtime-local.json
 
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
